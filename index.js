@@ -34,6 +34,9 @@ class Search {
     this.count = 0;
 
     if (this.searchValue) {
+      if (this.view.searchInput.value.match(/\s+$/gi)) {
+        return
+      }
       this.showError(null, true)
       await fetch(`https://api.github.com/search/repositories?q=${this.searchValue}`)
         .then((responce) => {
