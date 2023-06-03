@@ -107,4 +107,5 @@ button {
   text-align: center;
   padding-top: 5px;
   color: white;
+  z-index: 1;
 }

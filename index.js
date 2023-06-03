@@ -42,7 +42,9 @@ class Search {
         .then((responce) => {
           if (responce.ok) {
             responce.json().then((responce) => {
-              this.checkTotalCount(responce);
+              if (this.checkTotalCount(responce)) {
+                return
+              }
               this.showAutocomplit(responce)
             });
             
@@ -64,6 +66,7 @@ class Search {
     if (!data.total_count) {
       this.clearData(this.view, false);
       this.showError("this repository does'nt exist", false) 
+      return true
     }
   }
 
