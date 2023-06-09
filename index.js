@@ -25,36 +25,38 @@ class Search {
     this.view = view;
     this.view.searchInput.addEventListener(
       'input',
-      this.debounce(this.loadRepo.bind(this), 500)
+      this.debounce(this.loadRepo.bind(this), 600)
     );
   }
 
   async loadRepo() {
-    this.searchValue = this.view.searchInput.value.trim();
+    this.searchValue = this.view.searchInput.value;
     this.count = 0;
 
-    if (this.searchValue) {
+    if (this.searchValue.trim()) {
       if (this.view.searchInput.value.match(/\s+$/gi)) {
-        return
+        return;
       }
-      this.showError(null, true)
-      await fetch(`https://api.github.com/search/repositories?q=${this.searchValue}`)
+      this.showError(null, true);
+      await fetch(
+        `https://api.github.com/search/repositories?q=${this.searchValue}`
+      )
         .then((responce) => {
           if (responce.ok) {
             responce.json().then((responce) => {
               if (this.checkTotalCount(responce)) {
-                return
+                return;
               }
-              this.showAutocomplit(responce)
+              this.showAutocomplit(responce);
             });
-            
           } else if (!responce.ok)
             throw new Error(
               `Connection was failed ${responce.status}: ${responce.statusText}`
             );
         })
         .catch((err) => {
-          this.showError(err, false)
+          this.showError(err, false);
+          this.clearData(this.view, null, true);
         });
     } else {
       if (this.view.searchInput.value.match(/^\s+/gi)) return;
@@ -65,13 +67,13 @@ class Search {
   checkTotalCount(data) {
     if (!data.total_count) {
       this.clearData(this.view, false);
-      this.showError("this repository does'nt exist", false) 
-      return true
+      this.showError("this repository does'nt exist", false);
+      return true;
     }
   }
 
   showAutocomplit(data) {
-    this.createCardListener = (e) => this.createCard(e)
+    this.createCardListener = (e) => this.createCard(e);
     this.receiveRep = data.items
       .filter((item) =>
         item.name.toLowerCase().startsWith(this.searchValue.toLowerCase())
@@ -81,19 +83,19 @@ class Search {
       this.count++;
       return `<li id=${this.count}>${data.name}</li>`;
     });
-    this.clearData(this.view)
+    this.clearData(this.view);
     this.view.repList.insertAdjacentHTML('beforeend', this.getRep.join(''));
     this.view.repList.classList.add('active');
-    this.view.repList.addEventListener('click', this.createCardListener)
+    this.view.repList.addEventListener('click', this.createCardListener);
   }
 
-  showError (err, current) {
-    const error = document.querySelector('.error')
-    error.textContent = err
-    error.hidden = current
+  showError(err, current) {
+    const error = document.querySelector('.error');
+    error.textContent = err;
+    error.hidden = current;
   }
-  
-  createCard (e) {
+
+  createCard(e) {
     if (e.target.closest('.rep-list')) {
       const button = this.view.createElement('button', 'btn');
       const img = this.view.createElement('img');
@@ -106,7 +108,7 @@ class Search {
       const cardBlock = this.view.createElement('ul', 'card-block');
       cardBlock.insertAdjacentHTML(
         'beforeend',
-      `<li>Name: ${currentUser.name}</li>
+        `<li>Name: ${currentUser.name}</li>
        <li>Owner: ${currentUser.owner.login}</li>
        <li>Stars: ${currentUser.stargazers_count}</li>`
       );
@@ -114,24 +116,26 @@ class Search {
       cardBlock.append(button);
       this.view.cardList.append(card);
       this.clearData(this.view, true);
-      this.view.cardList.addEventListener('click', this.closeCard)
+      this.view.cardList.addEventListener('click', this.closeCard);
     }
   }
 
-  clearData(data, searchInput) {
+  clearData(data, searchInput, err) {
     if (searchInput) {
       data.searchInput.value = '';
     }
-    data.repList.removeEventListener('click', this.createCardListener)
+    data.repList.removeEventListener('click', this.createCardListener);
     data.repList.innerHTML = '';
     data.repList.classList.remove('active');
-    this.showError (null, true)
+    if (!err) {
+      this.showError(null, true);
+    }
   }
 
-  closeCard (e) {
-    if (e.target.tagName !== 'IMG') return
-    e.target.removeEventListener('click', this.closeCard)
-    e.target.closest('.card').remove()
+  closeCard(e) {
+    if (e.target.tagName !== 'IMG') return;
+    e.target.removeEventListener('click', this.closeCard);
+    e.target.closest('.card').remove();
   }
 
   debounce(fn, debounceTime) {
